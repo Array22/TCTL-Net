@@ -8,6 +8,7 @@ import argparse
 import os
 from utils.ssim_loss import SSIM
 from model.TCTLNet_model import TCTLNet
+import json
 
 
 def train(args):
@@ -23,7 +24,8 @@ def train(args):
     net.to(device)
 
     if args.continue_train:
-        net.load_state_dict(torch.load(os.path.join(args.model_path, args.name, 'net_latest.pth')))
+        net.load_state_dict(torch.load(os.path.join(args.model_path, args.name, 'net_latest.pth'),
+        weights_only=True))
 
     save_path = os.path.join(args.model_path, args.name)
     if not os.path.exists(save_path):
@@ -33,6 +35,15 @@ def train(args):
     mse_loss = nn.MSELoss()
     ssim_loss = SSIM()
     optimizer = torch.optim.Adam(net.parameters(), lr=args.learning_rate)
+    
+    # Record losses for visualization
+    loss_record = {
+        'update_count': [],
+        'l1_loss': [],
+        'mse_loss': [],
+        'ssim_loss': [],
+        'total_loss': []
+    }
 
     print('start training:{}'.format(args.name))
     for epoch in range(args.epochs):
@@ -65,26 +76,40 @@ def train(args):
                                                                             gray_B, mean_final, std_final)
 
             l1_loss = L1_loss(parm_six, true_num_final.float())
-            ssim = (1 - ssim_loss(Color_transed_img, refer_img))
+            ssim = (1 - ssim_loss(Color_transed_img, refer_img)) # turns into a loss value instead of score
             mse = mse_loss(Color_transed_img, refer_img)
             total_loss = 10.0 * l1_loss + ssim * 100.0 + mse * 0.1
+
+            # Record losses
+            loss_record['l1_loss'].append(l1_loss.item())
+            loss_record['mse_loss'].append(mse.item())
+            loss_record['ssim_loss'].append(ssim.item())
+            loss_record['total_loss'].append(total_loss.item())
+            loss_record['update_count'].append(iter_count + 1)
 
             optimizer.zero_grad()
             total_loss.backward()
             optimizer.step()
 
             if iter_count % args.print_freq == 0:
+            # if iter_count >= 0:
                 print(
                     'step:{}, train epoch[{}/{}] total_loss:{}  l1_loss:{} mse:{} '.format(step, epoch + 1, args.epochs,
                                                                                            total_loss, l1_loss * 10.0,
                                                                                            mse * 0.1));
-                iter_count += 1
+            iter_count += 1 # batch update count    
 
         if epoch % args.save_freq == 0:
             print('save Training model epoch' + str(epoch))
+            with open(os.path.join(save_path, 'loss_record.json'), 'w') as f:
+                    json.dump(loss_record, f, indent=4)
             torch.save(net.state_dict(), os.path.join(save_path, 'net_idx' + str(epoch) + '.pth'))
             torch.save(net.state_dict(), os.path.join(save_path, 'net_latest.pth'))
 
+    # write loss record to a JSON file for visualization
+    with open(os.path.join(save_path, 'loss_record.json'), 'w') as f:
+        json.dump(loss_record, f, indent=4)
+        
     print('Finished Training')
     torch.save(net.state_dict(), os.path.join(save_path, 'net_latest.pth'))
 

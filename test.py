@@ -26,7 +26,8 @@ def Test(args):
     net = TCTLNet(output_size=args.output_size, init_weights=False)
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net.to(device)
-    net.load_state_dict(torch.load(os.path.join(args.model_path, args.name, 'net_latest.pth')))
+    net.load_state_dict(torch.load(os.path.join(args.model_path, args.name, 'net_latest.pth'),
+    weights_only=True))
     net.eval()
 
     test_bar = tqdm(input_dataloader)
@@ -56,6 +57,7 @@ def Test(args):
             pre_pic_numpy = pre_rgb_mid.detach().cpu().numpy()
             pre_pic_final = np.array(pre_pic_numpy, dtype=np.uint8)
             cv2.imwrite(save_name1, pre_pic_final)
+            # Consider just computing the loss here and not outputting image.
 
 
 def get_args():

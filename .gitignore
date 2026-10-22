@@ -3,3 +3,17 @@
 .gitignore
 .idea/
 
+# images
+*.jpg
+*.jpeg
+*.png
+
+# models
+*.pth
+
+# cache
+*.pt
+*.pyc
+
+# text files
+*.txt
