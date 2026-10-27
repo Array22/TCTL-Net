@@ -16,5 +16,10 @@
 *.pyc
 __pycache__/
 
-# text files
-*.txt
+# dataset
+/split_data
+
+# report
+/report
+
+

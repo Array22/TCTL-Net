@@ -20,6 +20,7 @@ def plot_loss(loss_record, save_path):
     plt.plot(loss_record['update_count'], loss_record['total_loss'], label='Total Loss')
     plt.xlabel('Update Count')
     plt.ylabel('Loss Value')
+    plt.ylim(0,4000)
     plt.title('Training Losses Over Time')
     plt.legend()
     plt.grid()

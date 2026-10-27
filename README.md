@@ -8,7 +8,6 @@ This repository is the official PyTorch implementation of TCTL-Net.
 ``` 
 python train.py --dataroot /path_to_data --name train_name
 ```
-Use the first few cells in setup.ipynb
 ## Test
 ```
 python test.py --dataroot /path_to_data --name test_name
